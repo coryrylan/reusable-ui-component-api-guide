@@ -1,4 +1,4 @@
-# Reusable Component API Guide
+# Reusable UI Component API Guide
 
 ## Goals
 
