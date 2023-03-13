@@ -24,6 +24,40 @@ This guidance is not intended to define best practices around UI component API d
 - `Pattern`: A combination of Web Components to create new UI without introducing new components to the library
 - `Users`: Consumers or users of the Web Component library
 
+## Topics
+
+- [Compatibilty](#compatibilty)
+- [Element Registration](#element-registration)
+- [Properties & Attributes](#properties--attributes)
+  - [Attributes](#attributes)
+  - [Properties](#properties)
+  - [Impossible States](#impossible-states)
+  - [Primitive Types](#primitive-types)
+  - [Boolean Types](#boolean-types)
+- [Custom Events](#custom-events)
+- [Slots](#slots)
+  - [Slot Composition](#slot-composition)
+  - [Default Slots](#default-slots)
+  - [Encapsulate Slots](#encapsulate-slots)
+  - [Rendering](#rendering)
+- [Stateless APIs](#stateless-apis)
+  - [Escape Hatch - anti-pattern](#escape-hatch---anti-pattern)
+  - [State Synchornization](#state-synchornization)
+  - [Stateful Events](#stateful-events)
+- [Composition](#composition)
+  - [API Inheritance - anti-pattern](#api-inheritance---anti-pattern)
+  - [Semantic Obfuscation - anti-pattern](#semantic-obfuscation---anti-pattern)
+- [Styles & CSS](#styles--css)
+  - [Custom Properties](#custom-properties)
+  - [Internal Host](#internal-host)
+  - [State Properties](#state-properties)
+  - [Custom State Pseudo Classes](#custom-state-pseudo-classes)
+  - [Logical Properties](#logical-properties)
+  - [Parts](#parts)
+  - [Margins & Whitespace](#margins--whitespace)
+  - [Responsive](#responsive)
+- [Publishing](#publishing)
+
 ## Compatibilty
 
 Consistent API design improves not only the developer experience but also the consistency and compatibility across various UI frameworks and libraries. This guide focuses on building reusable UI via Web Components to ensure maximum compatibility across the Web ecosystem. While the code examples are Web Component focused, most of the concepts also apply to framework-specific component models.
@@ -96,13 +130,13 @@ Properties and attributes should represent the visual state of a component. Ther
 
 Properties and attributes can represent the same value and "reflect" or keep in sync between the two.
 
-#### Attribute
+#### Attributes
 
 ```html
 <ui-alert status="success"></ui-alert>
 ```
 
-#### Property
+#### Properties
 
 ```html
 <<ui-alert></ui-alert>
@@ -137,7 +171,7 @@ By leveraging attribute or property values, we can create enum-style APIs that p
 
 🎓 **Learn**: [Make Impossible States Impossible](https://kentcdodds.com/blog/make-impossible-states-impossible)
 
-## Primitive Types
+### Primitive Types
 
 Many Web Component authoring libraries, such as [lit](https://lit.dev), can easily keep attributes and properties in sync. This allows your component APIs to accept data with HTML attributes or JavaScript properties. However, HTML attributes are always treated as a string values. Because of this behavior, only use complex types such as `Object` and `Array` when setting properties.
 
@@ -187,6 +221,25 @@ Following the native HTML boolean attribute rules can make your components consi
 
 🎓 **Learn**: [Reusable UI Components and Data Binding](https://coryrylan.com/blog/reusable-ui-components-and-data-binding)
 
+## Custom Events
+
+Events communicate user intent. Examples of custom user events can include `close`, `change`, `open`. Events should remain stateless by emitting based on user interactions with the component and not from component state changes.
+
+```html
+<ui-dialog>hello</ui-dialog>
+```
+
+```javascript
+const dialog = document.querySelector('ui-dialog');
+dialog.addEventListener('close', () => dialog.hidden = true);
+```
+
+Avoid using verb/action prefixes to events such as `on`. Most frameworks de-sugar event handlers or auto-prefix the event name within the syntax. For example Angular `(close)="handle()"` and Preact `onClose={this.handle}`.
+
+🚧 **Warning**: For maximum compatibility use lower case events as [some frameworks](https://custom-elements-everywhere.com/#vue) incorrectly ignore case sensitivity with Custom Events.
+
+🚧 **Warning**: Avoid overriding existing event names from `HTMLElement`. Overloading events can break behavior and expectations with components. Example: [eslint rule](https://github.com/stencil-community/stencil-eslint/blob/main/src/rules/reserved-event-names.ts).
+
 ## Slots
 
 Slot or content projection enables a flexible API for consumers to provide dynamic content within a component. Slots are ideal for any content an application may render. Slots are commonly used in container-style components such as cards and tabs. Slots give complete control of the content to the host application in ways that properties and attributes would be limiting.
@@ -202,7 +255,7 @@ Slot or content projection enables a flexible API for consumers to provide dynam
 </ui-alert>
 ```
 
-### Composition
+### Slot Composition
 
 Slots can leverage component composition, decoupling behavior, and render/DOM order.
 
@@ -217,6 +270,37 @@ Slots can leverage component composition, decoupling behavior, and render/DOM or
 ```
 
 Allowing composition makes API flexible to different i18n solutions and use cases that properties or attributes would prevent.
+
+### Default Slots
+
+Providing reasonable defaults for a component to improve the developer experience is important. However, sometimes the defaults themselves need to be customized. For example, an alert message may have different status states (e.g., success, warning, danger), each displaying a different icon within the alert. In these cases, it may be necessary to customize the component's default behavior to meet the application's specific needs.
+
+```html
+<ui-alert status="success">success message</ui-alert>
+<ui-alert status="warning">warning message</ui-alert>
+<ui-alert status="danger">danger message</ui-alert>
+```
+
+We can leverage default slots to provide customization hooks to avoid the risk of the alert element absorbing parts of the icon API (as discussed above). This allows the alert component to internally provide default icons for different status states while allowing developers to customize the icons as needed. Using default slots, we can mitigate the risk of tightly coupled APIs and maintain a clear separation of concerns between the alert and icon elements.
+
+```html
+<!-- ui-alert template -->
+<slot name="icon">
+  <ui-icon name=${this.status}></ui-icon>
+</slot>
+```
+
+```html
+<!-- API usage -->
+<ui-alert status="warning">
+  <ui-icon slot="icon" name="custom"></ui-icon>
+  custom warning
+</ui-alert>
+```
+
+Slots can provide default content if no content is provided. For example, in an alert element, we can set an internal icon with a status icon that matches the status of the alert. If consumers want to customize the icon, they can do so by projecting their icon into the icon slot, overriding the default. This enables complete control over the custom icon without the alert element needing to expose the icon through a series of inherited attributes and properties. As with all API design choices, tradeoffs are involved, and it is important to consider each approach's benefits and potential challenges.
+
+🎓 **Learn**: [Reusable Component Patterns - Default Slots](https://coryrylan.com/blog/reusable-component-patterns-defult-slots)
 
 ### Encapsulate Slots
 
@@ -296,25 +380,6 @@ This allows the app to make optimizations that the treeview cannot assume, such 
   </ng-container>
 </ui-tree>
 ```
-
-## Custom Events
-
-Events communicate user intent. Examples of custom user events can include `close`, `change`, `open`. Events should remain stateless by emitting based on user interactions with the component and not from component state changes.
-
-```html
-<ui-dialog>hello</ui-dialog>
-```
-
-```javascript
-const dialog = document.querySelector('ui-dialog');
-dialog.addEventListener('close', () => dialog.hidden = true);
-```
-
-Avoid using verb/action prefixes to events such as `on`. Most frameworks de-sugar event handlers or auto-prefix the event name within the syntax. For example Angular `(close)="handle()"` and Preact `onClose={this.handle}`.
-
-🚧 **Warning**: For maximum compatibility use lower case events as [some frameworks](https://custom-elements-everywhere.com/#vue) incorrectly ignore case sensitivity with Custom Events.
-
-🚧 **Warning**: Avoid overriding existing event names from `HTMLElement`. Overloading events can break behavior and expectations with components. Example: [eslint rule](https://github.com/stencil-community/stencil-eslint/blob/main/src/rules/reserved-event-names.ts).
 
 ## Stateless APIs
 
@@ -404,37 +469,6 @@ Encapsulating other components and exposing their APIs can introduce "escape hat
 
 As the API for the icon component grows over time, there may be pressure for the host component's API (e.g., the button API) to absorb and expose additional API endpoints for the icon. This pressure, known as "API inheritance," can create tightly coupled and non-explicit APIs that only exist for certain component combinations. As a result, the API becomes more complex and verbose as more "escape hatches" are required. In this example, API inheritance leads to an API with 66 characters, while composition and slots result in an API with only 59 characters. By leveraging composition and slots, we can avoid supporting tightly coupled APIs and keep the supported API surface area smaller and easier to learn in the long term.
 
-### Default Slots
-
-Providing reasonable defaults for a component to improve the developer experience is important. However, sometimes the defaults themselves need to be customized. For example, an alert message may have different status states (e.g., success, warning, danger), each displaying a different icon within the alert. In these cases, it may be necessary to customize the component's default behavior to meet the application's specific needs.
-
-```html
-<ui-alert status="success">success message</ui-alert>
-<ui-alert status="warning">warning message</ui-alert>
-<ui-alert status="danger">danger message</ui-alert>
-```
-
-We can leverage default slots to provide customization hooks to avoid the risk of the alert element absorbing parts of the icon API (as discussed above). This allows the alert component to internally provide default icons for different status states while allowing developers to customize the icons as needed. Using default slots, we can mitigate the risk of tightly coupled APIs and maintain a clear separation of concerns between the alert and icon elements.
-
-```html
-<!-- ui-alert template -->
-<slot name="icon">
-  <ui-icon name=${this.status}></ui-icon>
-</slot>
-```
-
-```html
-<!-- API usage -->
-<ui-alert status="warning">
-  <ui-icon slot="icon" name="custom"></ui-icon>
-  custom warning
-</ui-alert>
-```
-
-Slots can provide default content if no content is provided. For example, in an alert element, we can set an internal icon with a status icon that matches the status of the alert. If consumers want to customize the icon, they can do so by projecting their icon into the icon slot, overriding the default. This enables complete control over the custom icon without the alert element needing to expose the icon through a series of inherited attributes and properties. As with all API design choices, tradeoffs are involved, and it is important to consider each approach's benefits and potential challenges.
-
-🎓 **Learn**: [Reusable Component Patterns - Default Slots](https://coryrylan.com/blog/reusable-component-patterns-defult-slots)
-
 ### Semantic Obfuscation - anti-pattern
 
 When designing composition-based APIs, it is important to push the semantics of the HTML into the light DOM or the control of the consumer. This helps to create a correct DOM structure and improved accessibility. For example, if a card element includes an `h1` heading, this makes an incorrect DOM structure, as there should only be one `h1` element within the page. By pushing the semantics of the heading up into the light DOM, the consumer can control the heading level and ensure that the page structure is correct.
@@ -473,7 +507,7 @@ Adding a layer of abstraction on top of the components is possible to provide mo
 
 🎓 **Learn**: [Reusable Component Anti-Patterns - Semantic Obfuscation](https://coryrylan.com/blog/reusable-component-anti-patterns-semantic-obfuscation)
 
-## Styles and CSS
+## Styles & CSS
 
 ### Custom Properties
 
@@ -675,16 +709,6 @@ ui-checkbox:--checked {
 }
 ```
 
-### Margins and Whitespace
-
-Well-encapsulated components should avoid projecting outer margins or whitespace outside the visible containment of the component. Margins on any reusable component make assumptions about the host layout and can tightly couple layout and component responsibilities. The layout or white space between components should be managed separately via layout components or utilities. If working in a Design System layout, utilities should be driven by consistent design tokens that manage both size and spacing values.
-
-Avoiding margins also can add a performance boost using the CSS Containment API. This API enables your components to provide hints to the browser about how it renders its layout. By avoiding margins, we can tell the browser that the layout will remain within our component's host element. This allows the browser to make performance optimizations when rendering.
-
-- 🏁 Performance: [CSS Containment API](developer.chrome.com/bhlog/css-containment)
-
-Fonts can have a significant impact on white space and the accuracy of layouts. New CSS proposals like [CSS Leading Trim](https://medium.com/microsoft-design/leading-trim-the-future-of-digital-typesetting-d082d84b202) can ensure typography is precise and adds no additional excess whitespace to layouts. Tools like [Capsize CSS](seek-oss.github.io/capsize/) allow components to use leading trim-like features today.
-
 ### Logical Properties
 
 Logical Properties can ensure the component styles will support various RTL languages. Logical Properties apply styles based on block and inline axis that can be inverted based on the browser language settings.
@@ -749,11 +773,21 @@ ui-alert::part(close-button) {
 
 The `ui-button` has a controlled and versioned API, so exposing the `ui-button` is slightly less risky since consumers can only use it via the public API defined by `ui-button`.
 
+### Margins and Whitespace
+
+Well-encapsulated components should avoid projecting outer margins or whitespace outside the visible containment of the component. Margins on any reusable component make assumptions about the host layout and can tightly couple layout and component responsibilities. The layout or white space between components should be managed separately via layout components or utilities. If working in a Design System layout, utilities should be driven by consistent design tokens that manage both size and spacing values.
+
+Avoiding margins also can add a performance boost using the CSS Containment API. This API enables your components to provide hints to the browser about how it renders its layout. By avoiding margins, we can tell the browser that the layout will remain within our component's host element. This allows the browser to make performance optimizations when rendering.
+
+- 🏁 Performance: [CSS Containment API](developer.chrome.com/bhlog/css-containment)
+
+Fonts can have a significant impact on white space and the accuracy of layouts. New CSS proposals like [CSS Leading Trim](https://medium.com/microsoft-design/leading-trim-the-future-of-digital-typesetting-d082d84b202) can ensure typography is precise and adds no additional excess whitespace to layouts. Tools like [Capsize CSS](seek-oss.github.io/capsize/) allow components to use leading trim-like features today.
+
 ### Responsive
 
 Components should be responsive by default, enabling them to be used in various contexts and devices. Leveraging APIs such as [CSS Container Queries](https://web.dev/cq-stable/) and [Resize Observers](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) can enable a component to be responsive relative to its container size and not just the viewport.
 
-## Packaging and Consumption
+## Publishing
 
 ### API Documentation
 
