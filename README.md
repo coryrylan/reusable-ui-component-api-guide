@@ -140,7 +140,7 @@ Properties and attributes can represent the same value and "reflect" or keep in 
 #### Properties
 
 ```html
-<<ui-alert></ui-alert>
+<ui-alert></ui-alert>
 <script type="module">
   import 'ui-alert.js';
   const alert = document.querySelector('ui-alert');
