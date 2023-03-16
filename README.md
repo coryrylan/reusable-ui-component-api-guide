@@ -2,11 +2,19 @@
 
 ## Goals
 
-Define and outline API best practices for creating highly reusable UI components that work in any Web framework or library. These recommendations are ideal for stateless leaf components in UI component libraries and design systems. However, these guidelines may only apply to some UI component design use cases at the application level.
+Define and outline API best practices for creating highly reusable UI components that work in any Web framework or library. These recommendations are ideal for stateless components commonly used in UI component libraries and design systems.
 
 ## Non-Goals
 
-This guidance is not intended to define best practices around UI component API design in the use cases for micro-frontends or high-level application UI state. However, many of the best practices described here may still be applicable.
+This guidance is not intended to define best practices around UI component API design in the use cases for high-level application UI components and state. However, many of the best practices described here may still be applicable.
+
+## About
+
+Over the years, I have worked in various aspects of design systems, open source, and maintenance of UI libraries. You can find other related resources and guides in the list below.
+
+- [coryrylan.com](https://coryrylan.com)
+- [webcomponent.dev](https://webcomponent.dev)
+- [clarity.design](https://storybook.core.clarity.design/?path=/story/internal-documentation-getting-started--page)
 
 ## Legend
 
@@ -16,13 +24,6 @@ This guidance is not intended to define best practices around UI component API d
 - 🏁 Performance: details of impact to performance
 - 📘 Tip: details on reasoning or rationale for guidance
 - 🎓 Learn: resources to learn more
-
-## Terminology
-
-- `Component`: Web Component defined via `Custom Elements API`
-- `Framework Component`: Component defined as part of a consuming application
-- `Pattern`: A combination of Web Components to create new UI without introducing new components to the library
-- `Users`: Consumers or users of the Web Component library
 
 ## Topics
 
