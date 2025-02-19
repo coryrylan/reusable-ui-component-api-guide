@@ -871,7 +871,12 @@ import 'ui-library/includes/button.js';
 import 'ui-library/includes/alert.js';
 ```
 
-The `package.json` needs to have a `sideEffects` property that explicitly lists all side effect files provided by the library package. This entry enables build tooling like Rollup and Webpack to optimize tree shaking while ensuring the side effects are included correctly in the final application bundle.
+Some bundlers such as Rollup or Webpack can optimize treeshaking of the above "side effects", by setting a `"sideEffects"` property in your `package.json`. While it can improve package size and dead code elimination, it also can sometimes cause the bundler to skip various optimizations and checks and wrongfully treeshake code that is actually used. It is error prone and difficult to keep up to date, and in some cases, you may not even realize you have sideEffects. All that to say, if you're going to use it, make sure you're properly testing it in various bundlers.
+
+More reading on sideEffects: 
+
+<https://webpack.js.org/guides/tree-shaking/>
+
 
 🚧 **Warning**: Side effect isolation is required for [Scoped Element Registries](https://github.com/webcomponents/polyfills/tree/master/packages/scoped-custom-element-registry)
 
