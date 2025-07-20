@@ -27,7 +27,7 @@ Over the years, I have worked in various aspects of design systems, open source,
 
 ## Topics
 
-- [Compatibilty](#compatibilty)
+- [Compatibility](#compatibility)
 - [Element Registration](#element-registration)
 - [Properties & Attributes](#properties--attributes)
   - [Attributes](#attributes)
@@ -59,7 +59,7 @@ Over the years, I have worked in various aspects of design systems, open source,
   - [Responsive](#responsive)
 - [Publishing](#publishing)
 
-## Compatibilty
+## Compatibility
 
 Consistent API design improves not only the developer experience but also the consistency and compatibility across various UI frameworks and libraries. This guide focuses on building reusable UI via Web Components to ensure maximum compatibility across the Web ecosystem. While the code examples are Web Component focused, most of the concepts also apply to framework-specific component models.
 
@@ -78,7 +78,7 @@ Consistent API design improves not only the developer experience but also the co
 ### Angular
 
 ```html
-<ui-alert status="success" *ngIf="show" [closable]="prop" (close)="fn($event)">
+<ui-alert status="success" [hidden]="!shopropw" (close)="fn($event)">
   hello world!
 </ui-alert>
 ```
@@ -86,7 +86,7 @@ Consistent API design improves not only the developer experience but also the co
 ### Lit
 
 ```html
-<ui-alert status="success" .closable=${this.prop} @close=${e => this.fn(e)}>
+<ui-alert status="success" .hidden=${!prop} @close=${e => this.fn(e)}>
   hello world!
 </ui-alert>
 ```
@@ -94,7 +94,7 @@ Consistent API design improves not only the developer experience but also the co
 ### Vue
 
 ```html
-<ui-alert status="success" :hidden="show" :closable="prop" @close="fn">
+<ui-alert status="success" :hidden="!prop" @close="fn">
   hello world!
 </ui-alert>
 ```
@@ -102,7 +102,7 @@ Consistent API design improves not only the developer experience but also the co
 ### Preact
 
 ```html
-<ui-alert status="success" hidden={show} closable={prop} onClose={this.fn}>
+<ui-alert status="success" hidden={!prop} onClose={this.fn}>
   hello world!
 </ui-alert>
 ```
@@ -418,7 +418,7 @@ Since we pushed the state to the application, the consumer has complete control 
 
 📘 **Tip**: Reusable and stateless test, "Can you prototype/demo any visual state of the component with just HTML?"
 
-### State Synchornization
+### State Synchronization
 
 Stateless components prevent the UI state from becoming out of sync. For example, suppose the dialog component controls or modifies its visibility state. In that case, it can open up situations where the dialog state is closed, but the host application state keeps its dialog visibility marked as open.
 
@@ -430,7 +430,7 @@ Stateless components prevent the UI state from becoming out of sync. For example
 
 Avoid emitting events in response to state changes of a component. As a consumer of a component, this creates unnecessary noise. For example, if an app sets a component's `expanded` state property, then it does not need a `expand` or `open` event to fire as it initiates the state change. Instead, events should only be triggered by user interactions.
 
-🚧 **Warning**: Reflective state events can cause excessive rendering or infinite redner loops.
+🚧 **Warning**: Reflective state events can cause excessive rendering or infinite render loops.
 
 ## Composition
 
@@ -792,7 +792,7 @@ Components should be responsive by default, enabling them to be used in various 
 
 ### API Documentation
 
-Tools like the [Custom Elements Analyzer](https://custom-elements-manifest.open-wc.org/) and [Custom Elements Manefest](https://github.com/webcomponents/custom-elements-manifest) provides a standard way to document and generate metadata for our components.
+Tools like the [Custom Elements Analyzer](https://custom-elements-manifest.open-wc.org/) and [Custom Elements Manifest](https://github.com/webcomponents/custom-elements-manifest) provides a standard way to document and generate metadata for our components.
 
 Using JSDoc syntax, we can add additional information to document the public API of the component that tools like TypeScript cannot.
 
@@ -815,7 +815,7 @@ class UIAlert {
 
 🎓 **Learn**: [Custom Elements Analyzer](https://custom-elements-manifest.open-wc.org/)
 
-🎓 **Learn**: [Custom Elements Manefest](https://github.com/webcomponents/custom-elements-manifest)
+🎓 **Learn**: [Custom Elements Manifest](https://github.com/webcomponents/custom-elements-manifest)
 
 ### Dependencies
 
@@ -856,9 +856,8 @@ Custom Elements must register via the `customElements` API. This associates the 
 To ensure global side effects are not unexpected such as cases like unit testing or [Scoped Element Registries](https://github.com/webcomponents/polyfills/tree/master/packages/scoped-custom-element-registry), they should be isolated from the component implementation.
 
 ```javascript
-// ui-library/includes/alert.js
-import 'ui-library/includes/button.js';
-import 'ui-library/includes/icon.js';
+import 'ui-library/include/button.js';
+import 'ui-library/include/icon.js';
 import { UIAlert } from 'ui-library/alert';
 
 customElements.get('ui-alert') || customElements.define('ui-alert', UIAlert);
@@ -867,11 +866,19 @@ customElements.get('ui-alert') || customElements.define('ui-alert', UIAlert);
 The isolated registration and imported dependencies ensure that the global registration only happens when explicitly included by the consumer.
 
 ```javascript
-import 'ui-library/includes/button.js';
-import 'ui-library/includes/alert.js';
+import 'ui-library/include/button.js';
+import 'ui-library/include/alert.js';
 ```
 
-The `package.json` needs to have a `sideEffects` property that explicitly lists all side effect files provided by the library package. This entry enables build tooling like Rollup and Webpack to optimize tree shaking while ensuring the side effects are included correctly in the final application bundle.
+The `package.json` must have a `sideEffects` property that explicitly lists all side effect files provided by the library package. This entry enables build tooling like Rollup and Webpack to optimize tree shaking while ensuring the side effects are included correctly in the final application bundle. 
+
+```json
+"sideEffects": [
+  "./dist/include/*.js"
+]
+```
+
+📘 **Tip**: Grouping side effect registrations to a single directory help reduce maintenance as the package.json file will not need continual path updates as new components are added.
 
 🚧 **Warning**: Side effect isolation is required for [Scoped Element Registries](https://github.com/webcomponents/polyfills/tree/master/packages/scoped-custom-element-registry)
 
